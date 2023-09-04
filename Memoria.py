@@ -13,10 +13,12 @@ class Memoria:
         return None
         
     def existe_espaco(self, num_paginas=1):
-        qtde_paginas_livres = len(filter(
-            lambda p: not p.ocupada,
-            self.paginas
-        ))
+        qtde_paginas_livres = len(
+            list(filter(
+                lambda p: not p.ocupada,
+                self.paginas
+            ))
+        )
 
         return qtde_paginas_livres > num_paginas
     
