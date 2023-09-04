@@ -23,7 +23,7 @@ class SistemaOperacional:
         self.num_pag_logicas = int(tam_disco / tam_pagina)
 
         # inicializa uma lista com as páginas nas memórias
-        self.mem_fisica = RAM(num_pag_fisicas, num_pag_logicas, tam_pagina)
+        self.mem_fisica = RAM(self.num_pag_fisicas, self.num_pag_logicas, tam_pagina)
 
         # processo que está atualmente em execução
         self.processo_execucao = None
@@ -105,6 +105,7 @@ class SistemaOperacional:
                 self.tempo_programa += 1
 
             else:
+                self.processo_execucao = em_execucao
                 em_execucao.estado = 'E'
 
                 tempo = 0
