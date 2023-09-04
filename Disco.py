@@ -1,5 +1,5 @@
-from Pagina import Pagina
+from Memoria import Memoria
 
-class Disco:
+class Disco(Memoria):
     def __init__(self, num_pag, tam_pag):
-        self.paginas = [Pagina(tam_pag)] * num_pag
+        super().__init__(num_pag, tam_pag)

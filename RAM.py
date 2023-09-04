@@ -1,33 +1,22 @@
 import math
 import random
 
-from Pagina import Pagina
+from Memoria import Memoria
 from Disco import Disco
 
-class RAM:
+class RAM(Memoria):
     def __init__(self, num_pag_fisicas, num_pag_logicas, tam_pag):
-        self.paginas = [Pagina(tam_pag)] * num_pag_fisicas
+        super().__init__(num_pag_fisicas, tam_pag)
         self.mem_logica = Disco(num_pag_logicas, tam_pag)
 
-        self.tam_pagina = tam_pag
-
-    def pagina_livre(self):
-        for p in self.paginas:
-            if not p.processo.ocupada:
-                return p
-        
-        return None
-
     def aloca_processo(self, processo):
+        if not self.existe_espaco():
+            return print('Sem espaço em memória.')
+
         num_paginas_processo = math.floor(processo.tamanho / self.tam_pagina)
 
-        pag_livre = self.pagina_livre()
-        if pag_livre is not None:
-            pag_livre.aloca(processo, full=True)
+        draw = [random.randint(0, 2) for _ in range(num_paginas_processo - 1)]
 
-        for _ in range(num_paginas_processo - 1):
-            draw = random.randint(0, 2)
-            if draw == 1:
-                pag_livre = self.pagina_livre()
-                if pag_livre is not None:
-                    pag_livre.aloca(processo, full=True)
+        for i in draw:
+            if i == 1:
+                self.aloca_processo

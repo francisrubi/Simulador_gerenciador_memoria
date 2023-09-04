@@ -13,3 +13,10 @@ class Pagina():
         
         for _ in range(qtde):
             self.bytes[_] = 1
+    
+    def desaloca(self):
+        self.ocupada = False
+        self.processo = None
+
+        tam = len(self.bytes)
+        self.bytes = [0] * tam
