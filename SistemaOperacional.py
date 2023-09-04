@@ -49,6 +49,8 @@ class SistemaOperacional:
             self.TSF = None
     #endregion
     
+    #region Manipulação de processos
+
     def insere_processo_fila(self, processo):
         pf = self.ProcessoFila(processo, self.tempo_programa)
         self.fila_aptos.append(pf)
@@ -58,6 +60,13 @@ class SistemaOperacional:
         p = Processo(nome, self.tempo_programa, tempo_processo, tamanho)
         self.mem_fisica.aloca_processo(p)
         self.insere_processo_fila(p)
+
+    # def encerra_processo(self, pid):
+    #     self.fila_aptos = [p for p in self.fila_aptos if p.processo.PID != pid]
+    #     if (self.processo_execucao.PID == pid):
+    #         self.processo_execucao = None
+
+    #endregion
 
     # Inserir funções de print aqui
     #region Funções Print
@@ -105,14 +114,15 @@ class SistemaOperacional:
                     tempo = (em_execucao.TP - em_execucao.TE)
                 
                 tempo_final = self.tempo_programa + tempo
-                while self.tempo_programa < tempo_final:
+                while self.tempo_programa < tempo_final and self.processo_execucao is not None:
                     time.sleep(1)
                     em_execucao.TE += 1
                     self.tempo_programa += 1
                 
-                if em_execucao.TE == em_execucao.TP:
-                    self.processo_execucao = None
-                    em_execucao.TT = self.tempo_programa
-                    em_execucao.executado = True
-                elif len(self.fila_aptos) > 0:
-                    self.insere_processo_fila(em_execucao)
+                if self.processo_execucao is not None:
+                    if em_execucao.TE == em_execucao.TP:
+                        self.processo_execucao = None
+                        em_execucao.TT = self.tempo_programa
+                        em_execucao.executado = True
+                    elif len(self.fila_aptos) > 0:
+                        self.insere_processo_fila(em_execucao)
