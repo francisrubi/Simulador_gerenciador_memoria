@@ -26,11 +26,12 @@ class SistemaOperacional:
         self.mem_fisica = RAM(self.num_pag_fisicas, self.num_pag_logicas, tam_pagina)
 
         # processo que está atualmente em execução
-        self.processo_execucao = None
+        self.processo_em_execucao = None
         self.quantum = quantum
 
         self.fila_aptos = []
         self.fila_aptos_historico = []
+        self.processos = []
 
         # cria uma thread, onde serão executados os processos assincronamente
         self.processador = threading.Thread(target=self.executa_processos)
@@ -51,6 +52,9 @@ class SistemaOperacional:
     
     #region Manipulação de processos
 
+    def busca_processo_pid(self, pid):
+        return next((p for p in self.processos if p.PID == pid), None)
+
     def insere_processo_fila(self, processo):
         pf = self.ProcessoFila(processo, self.tempo_programa)
         self.fila_aptos.append(pf)
@@ -58,26 +62,32 @@ class SistemaOperacional:
     
     def novo_processo(self, nome, tamanho, tempo_processo):
         p = Processo(nome, self.tempo_programa, tempo_processo, tamanho)
+        self.processos.append(p)
         self.mem_fisica.aloca_processo(p)
         self.insere_processo_fila(p)
 
-    # def encerra_processo(self, pid):
-    #     self.fila_aptos = [p for p in self.fila_aptos if p.processo.PID != pid]
-    #     if (self.processo_execucao.PID == pid):
-    #         self.processo_execucao = None
+    def encerra_processo(self, pid):
+        processo = self.busca_processo_pid(pid)
+
+        if (self.processo_em_execucao == processo):
+            self.processo_em_execucao = None
+
+        processo.encerra()
+        self.RAM.desaloca_processo(processo)
+        self.fila_aptos = [p for p in self.fila_aptos if p.processo.PID != pid]
 
     #endregion
 
     # Inserir funções de print aqui
     #region Funções Print
-    def mostra_fila_aptos_historico(self, ativos=False):
+    def mostra_fila_aptos_historico(self):
         if len(self.fila_aptos_historico) == 0:
             print('FILA VAZIA')
         else:
             print('PID / TCF / TEF / TSF')
             
             for p in self.fila_aptos_historico:
-                if p.processo.executado or ativos:
+                if p.processo.executado:
                     print(f'{p.processo.PID:<6}{p.TCF:<6}{(p.TSF - p.TCF):<6}{p.TSF}')
 
     def mostra_fila_aptos(self):
@@ -88,11 +98,35 @@ class SistemaOperacional:
             
             for p in self.fila_aptos:
                 print(f'{p.processo.PID:<6}{p.TCF:<6}{(self.tempo_programa - p.TCF):<6}{p.processo.TP - p.processo.TE}')
+    
+    def mostra_lista_processos(self, ativos):
+        processos = [
+            p for p in self.processos
+            if p.executado == ativos
+        ]
+
+        print('PID / TC / TE / TP / TAMANHO / NOME / E')                
+        for p in processos:
+            print(str(p))
+
+    def mostra_processo(self, processo):
+        print('PID / TC / TE / TP / TAMANHO / NOME / E')
+        print(str(processo))
+    
+    def mostra_processo_excucao(self):
+        self.mostra_processo(self.processo_em_execucao)
+    
+    def mostra_processo_id(self, pid):
+        processo = self.busca_processo_pid(pid)
+
+        if processo is not None:
+            self.mostra_processo(processo)
+
     #endregion
 
     def executa_processos(self):
         while self.executando:
-            em_execucao = self.processo_execucao
+            em_execucao = self.processo_em_execucao
 
             primeiro_fila = next(iter(self.fila_aptos), None)
             if primeiro_fila is not None:
@@ -101,11 +135,11 @@ class SistemaOperacional:
                 self.fila_aptos.pop(0)
 
             if em_execucao is None:
-                time.sleep(1)
                 self.tempo_programa += 1
+                time.sleep(1)
 
             else:
-                self.processo_execucao = em_execucao
+                self.processo_em_execucao = em_execucao
                 em_execucao.estado = 'E'
 
                 tempo = 0
@@ -115,14 +149,14 @@ class SistemaOperacional:
                     tempo = (em_execucao.TP - em_execucao.TE)
                 
                 tempo_final = self.tempo_programa + tempo
-                while self.tempo_programa < tempo_final and self.processo_execucao is not None:
-                    time.sleep(1)
+                while self.tempo_programa < tempo_final and self.processo_em_execucao is not None:
                     em_execucao.TE += 1
                     self.tempo_programa += 1
+                    time.sleep(1)
                 
-                if self.processo_execucao is not None:
+                if self.processo_em_execucao is not None:
                     if em_execucao.TE == em_execucao.TP:
-                        self.processo_execucao = None
+                        self.processo_em_execucao = None
                         em_execucao.TT = self.tempo_programa
                         em_execucao.executado = True
                     elif len(self.fila_aptos) > 0:

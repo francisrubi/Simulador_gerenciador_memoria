@@ -22,7 +22,7 @@ class Memoria:
 
         return qtde_paginas_livres > num_paginas
     
-    def desaloca_processo(pid):
+    def desaloca_processo(p):
         for pag in self.paginas:
-            if pag.processo.PID == pid:
+            if pag.processo == p:
                 pag.desaloca()
