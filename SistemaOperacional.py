@@ -80,6 +80,7 @@ class SistemaOperacional:
 
     # Inserir funções de print aqui
     #region Funções Print
+    #region Filas
     def mostra_fila_aptos_historico(self):
         if len(self.fila_aptos_historico) == 0:
             print('FILA VAZIA')
@@ -98,7 +99,9 @@ class SistemaOperacional:
             
             for p in self.fila_aptos:
                 print(f'{p.processo.PID:<6}{p.TCF:<6}{(self.tempo_programa - p.TCF):<6}{p.processo.TP - p.processo.TE}')
+    #endregion
     
+    #region Processos
     def mostra_lista_processos(self, ativos):
         processos = [
             p for p in self.processos
@@ -121,7 +124,17 @@ class SistemaOperacional:
 
         if processo is not None:
             self.mostra_processo(processo)
+    #endregion
 
+    #region Memória
+    def mostra_memoria_fisica(self):
+        (porcentagem_ocupadas, porcentagem_livres) = self.mem_fisica.calcula_porcentagem()
+        
+        print(f'Memória física: {porcentagem_ocupadas}% ocupada, {porcentagem_livres}% livre')
+
+    def mostra_paginas_memoria_fisica(self):
+        self.RAM.mostra_paginas()
+    #endregion
     #endregion
 
     def executa_processos(self):
