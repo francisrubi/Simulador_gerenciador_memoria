@@ -39,15 +39,15 @@ def verifica_entrada(so, entrada):
                 
                 case 'ps':
                     if isinstance(entrada[2], int):
-                        print('1')
+                        so.mostra_processo_id(entrada[2])
                     else:    
-                        print('1')
+                        so.mostra_lista_processos(True)
                 
                 case 'psh':
-                    print('1')
+                    so.mostra_lista_processos(False)
                 
                 case 'pse':
-                    print('1')
+                    so.mostra_processo_excucao()
 
 def realiza_leitura(so):
     while True:

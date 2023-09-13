@@ -3,10 +3,12 @@ class Pagina():
         self.bytes = [0] * tamanho
         self.ocupada = False
         self.processo = None
+        self.parte_processo = None
 
-    def aloca(self, p, qtde, full=False):
+    def aloca(self, p, index, qtde, full=False):
         self.ocupada = True
         self.processo = p
+        self.parte_processo = index
         
         if full:
             qtde = len(self.bytes)
@@ -17,6 +19,7 @@ class Pagina():
     def desaloca(self):
         self.ocupada = False
         self.processo = None
+        self.parte_processo = None
 
         tam = len(self.bytes)
         self.bytes = [0] * tam
