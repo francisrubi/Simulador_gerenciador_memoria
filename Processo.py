@@ -18,6 +18,11 @@ class Processo():
     def __str__(self):
         return f'{self.PID:<5}{self.TC:<4}{self.TE:<4}{self.TP:<4}{self.tamanho:<5}{self.nome:<3}{self.estado}'
     
+    def finaliza(self, tempo):
+        self.TT = tempo
+        self.estado = 'F'
+        self.executado = True
+
     def encerra(self):
         self.executado = True
         self.estado = ''

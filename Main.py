@@ -15,15 +15,17 @@ def verifica_entrada(so, entrada):
             match entrada[1]:
                 case 'kill':
                     if entrada[2] == 'pid':
-                        print('1')
+                        so.encerra_processo_pid(entrada[3])
                     elif entrada[2] == 'all':
-                        print('1')
+                        so.encerra_programa()
 
                 case 'mem':
-                    print('1')
+                    so.mostra_memoria_fisica()
 
                 case 'shutdown':
-                    print('1')
+                    so.encerra_programa()
+                case 'exit':
+                    so.encerra_programa()
 
                 case 'fa':
                     so.mostra_fila_aptos()
@@ -33,9 +35,9 @@ def verifica_entrada(so, entrada):
                 
                 case 'tp':
                     if isinstance(entrada[2], int):
-                        print('1')
+                        None
                     else:
-                        print('1')
+                        None
                 
                 case 'ps':
                     if isinstance(entrada[2], int):
@@ -50,7 +52,7 @@ def verifica_entrada(so, entrada):
                     so.mostra_processo_excucao()
 
 def realiza_leitura(so):
-    while True:
+    while so.executando:
         opcao = input()
 
         entrada = tuple(str.split(opcao))
@@ -60,7 +62,7 @@ def realiza_leitura(so):
 
 def main():
 
-    sistema = SistemaOperacional(32, 64, 8, 5)
+    sistema = SistemaOperacional(32, 64, 4, 5)
     
     leitura = threading.Thread(target=realiza_leitura, kwargs={'so': sistema})
     leitura.start()
