@@ -66,15 +66,31 @@ class SistemaOperacional:
         self.mem_fisica.aloca_processo(p)
         self.insere_processo_fila(p)
 
-    def encerra_processo(self, pid):
+    def encerra_processo_pid(self, pid):
         processo = self.busca_processo_pid(pid)
 
+        if processo is not None:
+            self.encerra_processo(processo)
+
+    def encerra_processo(self, processo):
         if (self.processo_em_execucao == processo):
             self.processo_em_execucao = None
 
         processo.encerra()
-        self.RAM.desaloca_processo(processo)
-        self.fila_aptos = [p for p in self.fila_aptos if p.processo.PID != pid]
+        self.mem_fisica.desaloca_processo(processo)
+        self.fila_aptos = [p for p in self.fila_aptos if p.processo == processo]
+    
+    def encerra_todos_processos(self):
+        for i, p in reversed(self.processos):
+            print(f'Encerrando processo {p.PID}...')
+            self.encerra_processo(p)
+
+    
+    def encerra_programa(self):
+        if len(self.processos) > 0:
+            self.encerra_todos_processos()
+        self.executando = False
+        self.processador.join()
 
     #endregion
 
@@ -108,12 +124,12 @@ class SistemaOperacional:
             if p.executado == ativos
         ]
 
-        print('PID / TC / TE / TP / TAMANHO / NOME / E')                
-        for p in processos:
-            print(str(p))
+        for i, p in processos:
+            self.mostra_processo(p, i == 0)
 
-    def mostra_processo(self, processo):
-        print('PID / TC / TE / TP / TAMANHO / NOME / E')
+    def mostra_processo(self, processo, cabecalho = True):
+        if cabecalho:
+            print('PID / TC / TE / TP / TAMANHO / NOME / E')
         print(str(processo))
     
     def mostra_processo_excucao(self):
@@ -131,17 +147,28 @@ class SistemaOperacional:
         (porcentagem_ocupadas, porcentagem_livres) = self.mem_fisica.calcula_porcentagem()
         
         print(f'Memória física: {porcentagem_ocupadas}% ocupada, {porcentagem_livres}% livre')
+        
+        self.mem_fisica.mostra_memoria()
 
-    def mostra_paginas_memoria_fisica(self):
-        self.RAM.mostra_paginas()
     #endregion
     #endregion
+
+    #region Execução de processos
+    def busca_proximo_processo(self):
+        if len(self.fila_aptos) > 0:
+            return self.fila_aptos[0]
+        else:
+            return None
+    
+    def finaliza_processo(self, processo):
+        self.processo_em_execucao = None
+        processo.finaliza(self.tempo_programa)
 
     def executa_processos(self):
         while self.executando:
             em_execucao = self.processo_em_execucao
 
-            primeiro_fila = next(iter(self.fila_aptos), None)
+            primeiro_fila = self.busca_proximo_processo()
             if primeiro_fila is not None:
                 primeiro_fila.TSF = self.tempo_programa
                 em_execucao = primeiro_fila.processo
@@ -155,11 +182,7 @@ class SistemaOperacional:
                 self.processo_em_execucao = em_execucao
                 em_execucao.estado = 'E'
 
-                tempo = 0
-                if self.quantum < (em_execucao.TP - em_execucao.TE):
-                    tempo = self.quantum
-                else:
-                    tempo = (em_execucao.TP - em_execucao.TE)
+                tempo = min(self.quantum, em_execucao.TP - em_execucao.TE)
                 
                 tempo_final = self.tempo_programa + tempo
                 while self.tempo_programa < tempo_final and self.processo_em_execucao is not None:
@@ -169,8 +192,8 @@ class SistemaOperacional:
                 
                 if self.processo_em_execucao is not None:
                     if em_execucao.TE == em_execucao.TP:
-                        self.processo_em_execucao = None
-                        em_execucao.TT = self.tempo_programa
-                        em_execucao.executado = True
+                        self.finaliza_processo(em_execucao)
+
                     elif len(self.fila_aptos) > 0:
                         self.insere_processo_fila(em_execucao)
+    #endregion
