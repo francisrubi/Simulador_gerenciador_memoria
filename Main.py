@@ -12,10 +12,14 @@ def verifica_entrada(so, entrada):
             so.novo_processo(entrada[1], tamanho, tempo)
             
         else:
+            pid = None
+            if len(entrada) == 3:
+                pid = int(entrada[2])
+
             match entrada[1]:
                 case 'kill':
-                    if entrada[2] == 'pid':
-                        so.encerra_processo_pid(entrada[3])
+                    if pid is not None:
+                        so.encerra_processo_pid(pid)
                     elif entrada[2] == 'all':
                         so.encerra_programa()
 
@@ -34,14 +38,14 @@ def verifica_entrada(so, entrada):
                     so.mostra_fila_aptos_historico()
                 
                 case 'tp':
-                    if isinstance(entrada[2], int):
+                    if pid is not None:
                         None
                     else:
                         None
                 
                 case 'ps':
-                    if isinstance(entrada[2], int):
-                        so.mostra_processo_id(entrada[2])
+                    if isinstance(pid, int):
+                        so.mostra_processo_id(pid)
                     else:    
                         so.mostra_lista_processos(True)
                 

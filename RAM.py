@@ -31,34 +31,16 @@ class RAM(Memoria):
             else:
                 self.mem_logica.busca_pagina_livre().aloca(processo, i, espaco_ultima_pagina, i != num_paginas_processo)
     
-    def mostra_memoria(self):
+    def mostra_memoria_fisica(self):
         print()
-        self.mostra_paginas_memoria_fisica()
+        print('MEMÓRIA FÍSICA:')
+        self.mostra_paginas_memoria_dados()
         print()
-        self.mostra_paginas_so()
-
-    def mostra_paginas_so(self):
-        print('NPF / BP')
-
-        tam_bin_pag = int(math.log2(len(self.paginas)))
-        form_pag = max(tam_bin_pag, 3)
-
-        for i, p in enumerate(self.paginas):
-            print(f'{i:<{tam_bin_pag}} / {str(1 if p.ocupada else 0)}')
+        self.mostra_paginas_memoria()
     
-    def mostra_paginas_memoria_fisica(self):
-
-        tam_bin_pag = int(math.log2(len(self.paginas)))
-        deslocamento = int(math.log2(self.tam_pagina))
-
-        form_pag = max(tam_bin_pag, 3)
-        form_desl = max(deslocamento, 12)
-        
-        print(f"{'NPF':<{tam_bin_pag}} / {'DESLOCAMENTO':<{deslocamento}} / DADOS")
-
-        for npag, pag in enumerate(self.paginas):
-            npf = f'{converte_binario(npag, tam_bin_pag)}'
-            dados = f'{pag.processo.nome if pag.ocupada else ""}'
-
-            for i, b in enumerate(pag.bytes):
-                print(f'{npf:<{form_pag}} / {converte_binario(i, deslocamento):<{form_desl}} / {dados if b == 1 else ""}')
+    def mostra_memoria_logica(self):
+        print()
+        print('MEMÓRIA LÓGICA:')
+        self.mem_logica.mostra_paginas_memoria_dados()
+        print()
+        self.mem_logica.mostra_paginas_memoria()

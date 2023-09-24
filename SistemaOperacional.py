@@ -78,10 +78,11 @@ class SistemaOperacional:
 
         processo.encerra()
         self.mem_fisica.desaloca_processo(processo)
+        self.mem_fisica.mem_logica.desaloca_processo(processo)
         self.fila_aptos = [p for p in self.fila_aptos if p.processo == processo]
     
     def encerra_todos_processos(self):
-        for i, p in reversed(self.processos):
+        for p in reversed(self.processos):
             print(f'Encerrando processo {p.PID}...')
             self.encerra_processo(p)
 
@@ -98,14 +99,15 @@ class SistemaOperacional:
     #region Funções Print
     #region Filas
     def mostra_fila_aptos_historico(self):
-        if len(self.fila_aptos_historico) == 0:
+        fila_finalizados = [p for p in self.fila_aptos_historico if p.processo.executado]
+
+        if len(fila_finalizados) == 0:
             print('FILA VAZIA')
         else:
             print('PID / TCF / TEF / TSF')
             
-            for p in self.fila_aptos_historico:
-                if p.processo.executado:
-                    print(f'{p.processo.PID:<6}{p.TCF:<6}{(p.TSF - p.TCF):<6}{p.TSF}')
+            for p in fila_finalizados:
+                print(f'{p.processo.PID:<6}{p.TCF:<6}{(p.TSF - p.TCF):<6}{p.TSF}')
 
     def mostra_fila_aptos(self):
         if len(self.fila_aptos) == 0:
@@ -124,7 +126,7 @@ class SistemaOperacional:
             if p.executado == ativos
         ]
 
-        for i, p in processos:
+        for i, p in enumerate(processos):
             self.mostra_processo(p, i == 0)
 
     def mostra_processo(self, processo, cabecalho = True):
@@ -148,7 +150,7 @@ class SistemaOperacional:
         
         print(f'Memória física: {porcentagem_ocupadas}% ocupada, {porcentagem_livres}% livre')
         
-        self.mem_fisica.mostra_memoria()
+        self.mem_fisica.mostra_memoria_fisica()
 
     #endregion
     #endregion
@@ -193,6 +195,8 @@ class SistemaOperacional:
                 if self.processo_em_execucao is not None:
                     if em_execucao.TE == em_execucao.TP:
                         self.finaliza_processo(em_execucao)
+                        self.mem_fisica.desaloca_processo(processo)
+                        self.mem_fisica.mem_logica.desaloca_processo(processo)
 
                     elif len(self.fila_aptos) > 0:
                         self.insere_processo_fila(em_execucao)
