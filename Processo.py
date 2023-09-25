@@ -16,7 +16,7 @@ class Processo():
         self.estado = 'A'
     
     def __str__(self):
-        return f'{self.PID:<5}{self.TC:<4}{self.TE:<4}{self.TP:<4}{self.tamanho:<5}{self.nome:<3}{self.estado}'
+        return f'{self.PID:<3} / {self.TC:<2} / {self.TE:<2} / {self.TP:<2} / {self.tamanho:<7} / {self.nome:<4} / {self.estado}'
     
     def finaliza(self, tempo):
         self.TT = tempo
