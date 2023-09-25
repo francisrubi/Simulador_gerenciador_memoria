@@ -25,11 +25,12 @@ class SistemaOperacional:
         self.mem_fisica = RAM(self.num_pag_fisicas, self.num_pag_logicas, tam_pagina)
 
         # processo que está atualmente em execução
-        self.processo_execucao = None
+        self.processo_em_execucao = None
         self.quantum = quantum
 
         self.fila_aptos = []
         self.fila_aptos_historico = []
+        self.processos = []
 
         # cria uma thread, onde serão executados os processos assincronamente
         self.processador = threading.Thread(target=self.executa_processos)
@@ -50,6 +51,9 @@ class SistemaOperacional:
     
     #region Manipulação de processos
 
+    def busca_processo_pid(self, pid):
+        return next((p for p in self.processos if p.PID == pid), None)
+
     def insere_processo_fila(self, processo):
         pf = self.ProcessoFila(processo, self.tempo_programa)
         self.fila_aptos.append(pf)
@@ -57,6 +61,7 @@ class SistemaOperacional:
     
     def novo_processo(self, nome, tamanho, tempo_processo):
         p = Processo(nome, self.tempo_programa, tempo_processo, tamanho)
+        self.processos.append(p)
         self.mem_fisica.aloca_processo(p)
         self.insere_processo_fila(p)
 
@@ -99,15 +104,17 @@ class SistemaOperacional:
 
     # Inserir funções de print aqui
     #region Funções Print
-    def mostra_fila_aptos_historico(self, ativos=False):
-        if len(self.fila_aptos_historico) == 0:
+    #region Filas
+    def mostra_fila_aptos_historico(self):
+        fila_finalizados = [p for p in self.fila_aptos_historico if p.processo.executado]
+
+        if len(fila_finalizados) == 0:
             print('FILA VAZIA')
         else:
             print('PID / TCF / TEF / TSF')
             
-            for p in self.fila_aptos_historico:
-                if p.processo.executado or ativos:
-                    print(f'{p.processo.PID:<6}{p.TCF:<6}{(p.TSF - p.TCF):<6}{p.TSF}')
+            for p in fila_finalizados:
+                print(f'{p.processo.PID:<6}{p.TCF:<6}{(p.TSF - p.TCF):<6}{p.TSF}')
 
     def mostra_fila_aptos(self):
         if len(self.fila_aptos) == 0:
@@ -171,7 +178,7 @@ class SistemaOperacional:
 
     def executa_processos(self):
         while self.executando:
-            em_execucao = self.processo_execucao
+            em_execucao = self.processo_em_execucao
 
             primeiro_fila = self.busca_primeiro_fila()
             if primeiro_fila is not None:
@@ -180,26 +187,22 @@ class SistemaOperacional:
                 self.fila_aptos.remove(primeiro_fila)
 
             if em_execucao is None:
-                time.sleep(1)
                 self.tempo_programa += 1
+                time.sleep(1)
 
             else:
-                self.processo_execucao = em_execucao
+                self.processo_em_execucao = em_execucao
                 em_execucao.estado = 'E'
 
-                tempo = 0
-                if self.quantum < (em_execucao.TP - em_execucao.TE):
-                    tempo = self.quantum
-                else:
-                    tempo = (em_execucao.TP - em_execucao.TE)
+                tempo = min(self.quantum, em_execucao.TP - em_execucao.TE)
                 
                 tempo_final = self.tempo_programa + tempo
-                while self.tempo_programa < tempo_final and self.processo_execucao is not None:
-                    time.sleep(1)
+                while self.tempo_programa < tempo_final and self.processo_em_execucao is not None:
                     em_execucao.TE += 1
                     self.tempo_programa += 1
+                    time.sleep(1)
                 
-                if self.processo_execucao is not None:
+                if self.processo_em_execucao is not None:
                     if em_execucao.TE == em_execucao.TP:
                         self.finaliza_processo(em_execucao)
                         self.processo_em_execucao = None

@@ -10,17 +10,19 @@ def converte_binario(n, t = 0):
 
 class Memoria:
     def __init__(self, num_pag, tam_pag):
-        self.paginas = [Pagina(tam_pag)] * num_pag
+        self.paginas = [
+            Pagina(tam_pag) for _ in range(num_pag)
+        ]
         self.tam_pagina = tam_pag
         self.tamanho = num_pag * tam_pag
 
     def busca_pagina_livre(self):
         for p in self.paginas:
-            if not p.processo.ocupada:
+            if not p.ocupada:
                 return p
         
         return None
-        
+    
     def existe_espaco(self, num_paginas=1):
         qtde_paginas_livres = len(
             list(filter(
@@ -31,9 +33,9 @@ class Memoria:
 
         return qtde_paginas_livres >= num_paginas
     
-    def desaloca_processo(pid):
+    def desaloca_processo(self, p):
         for pag in self.paginas:
-            if pag.processo.PID == pid:
+            if pag.processo == p:
                 pag.desaloca()
     
     def calcula_porcentagem(self):
