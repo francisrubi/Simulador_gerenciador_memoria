@@ -1,5 +1,6 @@
 # módulo que permite executar funções assíncronas
 # necessário para permitir as entradas do usuário ao mesmo tempo que são executados os processos
+import asyncio
 import threading
 import time
 
@@ -22,7 +23,8 @@ class SistemaOperacional:
         self.num_pag_logicas = int(tam_disco / tam_pagina)
 
         # inicializa as memórias física e lógica
-        self.mem_fisica = RAM(self.num_pag_fisicas, self.num_pag_logicas, tam_pagina)
+        self.mem_fisica = RAM(self.num_pag_fisicas, self.num_pag_logicas, tam_pagina, self)
+        self.mem_logica = self.mem_fisica.mem_logica
 
         # processo que está atualmente em execução
         self.processo_em_execucao = None
@@ -60,9 +62,15 @@ class SistemaOperacional:
         self.fila_aptos_historico.append(pf)
     
     def novo_processo(self, nome, tamanho, tempo_processo):
+        if not self.mem_fisica.existe_espaco():
+            return print('Sem espaço em memória física.')
+
         p = Processo(nome, self.tempo_programa, tempo_processo, tamanho)
+        sucesso = self.mem_fisica.aloca_processo(p)
+        if not sucesso:
+            return print('Sem espaço em memória física.')
+
         self.processos.append(p)
-        self.mem_fisica.aloca_processo(p)
         self.insere_processo_fila(p)
 
     def encerra_processo_pid(self, pid):
@@ -94,12 +102,20 @@ class SistemaOperacional:
     
     def desaloca_processo(self, processo):
         self.mem_fisica.desaloca_processo(processo)
-        self.mem_fisica.mem_logica.desaloca_processo(processo)
+        self.mem_logica.desaloca_processo(processo)
 
     def finaliza_processo(self, processo):
         processo.finaliza(self.tempo_programa)
         self.desaloca_processo(processo)
 
+    def busca_paginas_swap_out(self, processo):
+        for p in self.processos:
+            if p != processo:
+                (paginas, qtde) = self.mem_fisica.paginas_processo(p)
+                if qtde > 0:
+                    return (paginas, qtde)
+
+        return (None, 0)
     #endregion
 
     # Inserir funções de print aqui
@@ -191,23 +207,31 @@ class SistemaOperacional:
                 time.sleep(1)
 
             else:
-                self.processo_em_execucao = em_execucao
-                em_execucao.estado = 'E'
+                sucesso = self.mem_fisica.carrega_processo_memoria(em_execucao)
 
-                tempo = min(self.quantum, em_execucao.TP - em_execucao.TE)
-                
-                tempo_final = self.tempo_programa + tempo
-                while self.tempo_programa < tempo_final and self.processo_em_execucao is not None:
-                    em_execucao.TE += 1
-                    self.tempo_programa += 1
-                    time.sleep(1)
-                
-                if self.processo_em_execucao is not None:
-                    if em_execucao.TE == em_execucao.TP:
-                        self.finaliza_processo(em_execucao)
-                        self.processo_em_execucao = None
+                if sucesso:
+                    self.processo_em_execucao = em_execucao
+                    em_execucao.estado = 'E'
 
-                    elif len(self.fila_aptos) > 0:
-                        self.insere_processo_fila(em_execucao)                    
-                        self.processo_em_execucao = None
+                    tempo = min(self.quantum, em_execucao.TP - em_execucao.TE)
+                    
+                    tempo_final = self.tempo_programa + tempo
+                    while self.tempo_programa < tempo_final and self.processo_em_execucao is not None:
+                        em_execucao.TE += 1
+                        self.tempo_programa += 1
+                        time.sleep(1)
+                    
+                    if self.processo_em_execucao is not None:
+                        if em_execucao.TE == em_execucao.TP:
+                            self.finaliza_processo(em_execucao)
+                            self.processo_em_execucao = None
+
+                        elif len(self.fila_aptos) > 0:
+                            self.insere_processo_fila(em_execucao)
+                            self.processo_em_execucao = None
+                
+                else:
+                    self.insere_processo_fila(em_execucao)
+                    self.processo_em_execucao = None
+
     #endregion

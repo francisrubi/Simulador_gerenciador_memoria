@@ -58,7 +58,7 @@ class Memoria:
         form_pag = max(tam_bin_pag, 3)
 
         for i, p in enumerate(self.paginas):
-            print(f'{i:<{tam_bin_pag}} / {str(1 if p.ocupada else 0)}')
+            print(f'{i:<{tam_bin_pag}} / {str(1 if p.ocupada else 0)} / {p.processo.PID if p.ocupada else ""}')
     
     def mostra_paginas_memoria_dados(self):
 
@@ -76,3 +76,11 @@ class Memoria:
 
             for i, b in enumerate(pag.bytes):
                 print(f'{npf:<{form_pag}} / {converte_binario(i, deslocamento):<{form_desl}} / {dados if b == 1 else ""}')
+    
+    def paginas_processo(self, p):
+        paginas = list(filter(
+            lambda pag: pag.processo == p,
+            self.paginas
+        ))
+
+        return (paginas, len(paginas))

@@ -6,9 +6,10 @@ from Memoria import converte_binario, log_base2
 from Disco import Disco
 
 class RAM(Memoria):
-    def __init__(self, num_pag_fisicas, num_pag_logicas, tam_pag):
+    def __init__(self, num_pag_fisicas, num_pag_logicas, tam_pag, so):
         super().__init__(num_pag_fisicas, tam_pag)
         self.mem_logica = Disco(num_pag_logicas, tam_pag)
+        self.so = so
 
     def aloca_processo(self, processo):
         num_sorteadas = math.ceil(processo.tamanho / self.tam_pagina) - 1
@@ -19,10 +20,12 @@ class RAM(Memoria):
         num_paginas_processo = len(draw)
         pag_memoria_fisica = draw.count(1)
         if not self.existe_espaco(pag_memoria_fisica):
-            return print('Sem espaço em memória física.')
+            print('Sem espaço em memória física.')
+            return False
 
         if not self.mem_logica.existe_espaco(num_paginas_processo - pag_memoria_fisica):
-            return print('Sem espaço em memória lógica.')
+            print('Sem espaço em memória lógica.')
+            return False
 
         espaco_ultima_pagina = processo.tamanho % self.tam_pagina
 
@@ -31,6 +34,8 @@ class RAM(Memoria):
                 self.busca_pagina_livre().aloca(processo, i, espaco_ultima_pagina, i != num_paginas_processo)
             else:
                 self.mem_logica.busca_pagina_livre().aloca(processo, i, espaco_ultima_pagina, i != num_paginas_processo)
+        
+        return True
     
     def mostra_memoria_fisica(self):
         print()
@@ -67,3 +72,31 @@ class RAM(Memoria):
                 npf = converte_binario(index_pag_fisica, tam_bin_pag)
 
             print(f'{converte_binario(i, tam_bin_pag_logica):<{form_pag}} / {npf}')
+    
+    def carrega_processo_memoria(self, processo):
+        (paginas, num_paginas) = self.mem_logica.paginas_processo(processo)
+        
+        if num_paginas == 0:
+            return True
+        
+        for p in paginas:
+            if self.existe_espaco():
+                self.busca_pagina_livre().aloca(processo, p.parte_processo, p.bytes.count(1))
+                p.desaloca()
+            
+            else:
+                (paginas_swap_out, qtde) = self.so.busca_paginas_swap_out(processo)
+                if qtde == 0:
+                    return False
+                
+                processo_swap_out = paginas_swap_out[0].processo
+                index = paginas_swap_out[0].parte_processo
+                tamanho_pag = paginas_swap_out[0].bytes.count(1)
+
+                paginas_swap_out[0].desaloca()
+                paginas_swap_out[0].aloca(processo, p.parte_processo, p.bytes.count(1))
+                p.desaloca()
+
+                self.mem_logica.busca_pagina_livre().aloca(processo_swap_out, index, tamanho_pag)
+
+        return True
